@@ -1,0 +1,12 @@
+{
+  "name": "gotron-browser-window",
+  "version": "0.1.0",
+  "main": "main.js",
+  "dependencies": {
+    "jquery": "^3.5.1",
+    "websocket": "latest"
+  },
+  "devDependencies": {
+    "electron": "^2.0.15"
+  }
+}
