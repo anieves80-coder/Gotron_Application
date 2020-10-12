@@ -1,10 +1,22 @@
 $(document).ready(function () {
-
+    let ws = new WebSocket("ws://localhost:" + global.backendPort + "/web/app/events");
     const dt = new Date();
     const date = dt.getMonth() + 1 + "/" + dt.getDate() + "/" + dt.getFullYear();
     $("#dateInput").val(date);
 
     $("#frm").on("submit", function (e) {
+        e.preventDefault();
+        ws.send(JSON.stringify({
+            "event": "get-all"
+        }));
+    });
+
+    $("#searchBtn").on("click", function (e) {
+        e.preventDefault();
+        alert("ok there");
+    });
+
+    $("#modifyBtn").on("click", function (e) {
         e.preventDefault();
         alert("ok there");
     });
@@ -18,17 +30,35 @@ $(document).ready(function () {
 
         switch(opt){
             case "modify":
-                $("#submitBtn").text("Modify");
+                setModify();
                 break;
             case "search":
-                $("#submitBtn").text("Search");
+                setSearch();
                 break;
             default:
-                $("#submitBtn").text(" Add ");
+                setAdd();
         }
 
     });
 
+    function setSearch() {
+        $("#addBtn, #modifyBtn").addClass("btnHide");        
+        $("#searchBtn").removeClass("btnHide");
+        $("#dateInput, #sn2Input").val("");        
+        $("#sn2Input").attr("disabled", "disabled"); 
+    }
+    function setAdd() {
+        $("#searchBtn, #modifyBtn").addClass("btnHide");        
+        $("#addBtn").removeClass("btnHide");
+        $("#dateInput").val(date);
+        $("#sn2Input").removeAttr("disabled");
+    }
+    function setModify() {
+        $("#addBtn, #searchBtn").addClass("btnHide");        
+        $("#modifyBtn").removeClass("btnHide");        
+        $("#sn2Input").removeAttr("disabled");
+        $("#dateInput").val("");
+    }
 
 
 });
