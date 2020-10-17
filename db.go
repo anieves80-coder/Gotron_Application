@@ -2,23 +2,23 @@ package main
 
 import (
 	"database/sql"
+	"encoding/json"
 	// "fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
 
-type dataInfo struct {
-	rma     int
-	sn1     string
-	sn2     string
-	date    string
-	comment string
-	err     string
-}
-
-var results []dataInfo
-
 var db *sql.DB
+
+//DataInfo struct
+type DataInfo struct {
+	Rma     int    `json:"rma"`
+	Sn1     string `json:"sn1"`
+	Sn2     string `json:"sn2"`
+	Date    string `json:"date"`
+	Comment string `json:"comment"`
+	Err     string `json:"err"`
+}
 
 func init() {
 
@@ -30,24 +30,27 @@ func init() {
 	}
 }
 
-func (d dataInfo) getAll() []dataInfo {
-
+func (d DataInfo) getAll() []string {
+	var results []string
 	rows, err := db.Query("SELECT * FROM rmaData")
 
 	if err != nil {
-		d.err = "Error running query."
-		results = append(results, d)
+		d.Err = "Error running query."
+		res, _ := json.Marshal(d)
+		results = append(results, string(res))
 		return results
 	}
 
 	if rows.Next() {
-		err = rows.Scan(&d.rma, &d.sn1, &d.sn2, &d.date, &d.comment)
+		err = rows.Scan(&d.Rma, &d.Sn1, &d.Sn2, &d.Date, &d.Comment)
 		if err != nil {
-			d.err = "Error reading data from query."
-			results = append(results, d)
+			d.Err = "Error reading data from query."
+			res, _ := json.Marshal(d)
+			results = append(results, string(res))
 			return results
 		}
-		results = append(results, d)
+		res, _ := json.Marshal(d)
+		results = append(results, string(res))
 	}
 
 	rows.Close()

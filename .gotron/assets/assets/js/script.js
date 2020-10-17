@@ -60,5 +60,23 @@ $(document).ready(function () {
         $("#dateInput").val("");
     }
 
+    ws.onmessage = (message) => {
+        let obj = JSON.parse(message.data);
+        $("#tableResults").empty();
+        if(obj.event === "get-all"){
+            obj.eventData.forEach(element => {
+                const e = JSON.parse(element);
+                $("#tableResults").append(`
+                    <tr>
+                        <th scope="row">1</th>
+                        <td>${e.rma}</td>
+                        <td>${e.sn1}</td>
+                        <td>${e.sn2}</td>
+                        <td>${e.comment}</td>
+                    </tr>                
+                `);
+            });
+        }
+    }
 
 });

@@ -1,15 +1,20 @@
 package main
 
 import (
+	// "fmt"
 	"github.com/Equanox/gotron"
-	"fmt"
+	// "encoding/json"
 )
 
-var x = dataInfo{}
+var x = DataInfo{}
+
+//CustomEvent is the struct sent to the front end
+type CustomEvent struct {
+	*gotron.Event
+	CustomAttribute []string `json:"eventData"`
+}
 
 func main() {
-	
-	fmt.Println(x.getAll())
 
 	// Create a window instance
 	window, err := gotron.New("./ui/")
@@ -32,20 +37,14 @@ func main() {
 	// Needs to set after starting the window/browser
 	//window.OpenDevTools()
 
+	window.On(&gotron.Event{Event: "get-all"}, func(bin []byte) {
+		d := x.getAll()
+		window.Send(&CustomEvent{
+			Event:           &gotron.Event{Event: "get-all"},
+			CustomAttribute: d,
+		})
 
-	window.On(&gotron.Event{Event: "get-all"}, func(bin []byte) {		
-		fmt.Println(string(bin))
 	})
-
-
-
-
-
-
-
-
-
-
 
 	// Wait for the application to close
 	<-done
