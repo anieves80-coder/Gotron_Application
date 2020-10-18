@@ -3,7 +3,7 @@ package main
 import (
 	"database/sql"
 	"encoding/json"
-	// "fmt"
+	"fmt"
 	_ "github.com/mattn/go-sqlite3"
 	"log"
 )
@@ -30,10 +30,17 @@ func init() {
 	}
 }
 
+func (d DataInfo) addUser() {
+	tx, _ := db.Begin()
+	stmt, _ := tx.Prepare("INSERT INTO rmaData (RMA, SN1, SN2, DATE, COMMENTS) VALUES (?, ?, ?, ?, ?)")
+	_, err := stmt.Exec(d.Rma, d.Sn1, d.Sn2, d.Date, d.Comment)
+	fmt.Println(err)
+	tx.Commit()
+}
+
 func (d DataInfo) getAll() []string {
 	var results []string
-	rows, err := db.Query("SELECT * FROM rmaData")
-
+	rows, err := db.Query("SELECT * FROM rmaData")	
 	if err != nil {
 		d.Err = "Error running query."
 		res, _ := json.Marshal(d)
@@ -41,8 +48,18 @@ func (d DataInfo) getAll() []string {
 		return results
 	}
 
-	if rows.Next() {
-		err = rows.Scan(&d.Rma, &d.Sn1, &d.Sn2, &d.Date, &d.Comment)
+	defer rows.Close()
+
+	return returnResults(d,rows)
+
+}
+
+func returnResults(d DataInfo, rows *sql.Rows) []string {
+	
+	var results []string
+	
+	for rows.Next() {
+		err := rows.Scan(&d.Rma, &d.Sn1, &d.Sn2, &d.Date, &d.Comment)
 		if err != nil {
 			d.Err = "Error reading data from query."
 			res, _ := json.Marshal(d)
@@ -52,8 +69,5 @@ func (d DataInfo) getAll() []string {
 		res, _ := json.Marshal(d)
 		results = append(results, string(res))
 	}
-
-	rows.Close()
 	return results
-
 }

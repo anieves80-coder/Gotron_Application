@@ -1,9 +1,10 @@
 package main
 
 import (
-	// "fmt"
+	"encoding/json"
+	"fmt"
 	"github.com/Equanox/gotron"
-	// "encoding/json"
+	"strconv"
 )
 
 var x = DataInfo{}
@@ -12,6 +13,13 @@ var x = DataInfo{}
 type CustomEvent struct {
 	*gotron.Event
 	CustomAttribute []string `json:"eventData"`
+}
+
+//GetEvent is the struct get data from the front end
+type GetEvent struct {
+	// *gotron.Event
+	Event string            `json:"event"`
+	Data  map[string]string `json:"data"`
 }
 
 func main() {
@@ -44,6 +52,21 @@ func main() {
 			CustomAttribute: d,
 		})
 
+	})
+	window.On(&gotron.Event{Event: "add-one"}, func(bin []byte) {
+		var ge GetEvent
+		var d DataInfo
+		json.Unmarshal(bin, &ge)
+		d.Comment = ge.Data["comment"]
+		d.Date = ge.Data["date"]
+		d.Sn1 = ge.Data["sn1"]
+		d.Sn2 = ge.Data["sn2"]
+		i, err := strconv.Atoi(ge.Data["rma"])
+		if err != nil {
+			fmt.Println("send a msg to frontend about rma being only numbers")
+		}
+		d.Rma = i
+		d.addUser()
 	})
 
 	// Wait for the application to close

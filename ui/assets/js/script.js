@@ -6,14 +6,31 @@ $(document).ready(function () {
 
     $("#frm").on("submit", function (e) {
         e.preventDefault();
+        const data = {
+            rma: $("#rmaInput").val(),
+            sn1: $("#sn1Input").val(),
+            sn2: $("#sn2Input").val(),
+            frmDate: $("#dateInput").val(),
+            comment: $("#msgTextarea").val()
+        }
         ws.send(JSON.stringify({
-            "event": "get-all"
+            "event": "add-one",
+            data
         }));
     });
 
     $("#searchBtn").on("click", function (e) {
         e.preventDefault();
-        alert("ok there");
+        const data = {
+            rma: $("#rmaInput").val(),
+            sn1: $("#sn1Input").val(),
+            frmDate: $("#dateInput").val()            
+        }
+        if (!data.rma && !data.sn1 && !data.Date) {
+            ws.send(JSON.stringify({
+                "event": "get-all"
+            }));
+        }
     });
 
     $("#modifyBtn").on("click", function (e) {
