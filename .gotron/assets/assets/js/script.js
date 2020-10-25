@@ -1,4 +1,5 @@
 $(document).ready(function () {
+	
 	let ws = new WebSocket('ws://localhost:' + global.backendPort + '/web/app/events');
 	const dt = new Date();
 	const date = dt.getMonth() + 1 + '/' + dt.getDate() + '/' + dt.getFullYear();
@@ -7,6 +8,7 @@ $(document).ready(function () {
 
 	$('#frm').on('submit', function (e) {
 		e.preventDefault();
+		$('#msg').text("");
 		const data = {
 			rma: $('#rmaInput').val(),
 			sn1: $('#sn1Input').val(),
@@ -24,23 +26,24 @@ $(document).ready(function () {
 
 	$('#searchBtn').on('click', function (e) {
 		e.preventDefault();
+		$('#msg').text("");
 		const data = {
 			rma: $('#rmaInput').val().trim(),
 			sn1: $('#sn1Input').val().trim(),
-			frmDate: $('#dateInput').val().trim(),
-			// update: false
-		};
-		
+			frmDate: $('#dateInput').val().trim()
+		};				
 		ws.send(
 			JSON.stringify({
-				event: 'get-searchBy'
+				event: 'get-searchBy',
+				data
 			})
 		);
 		 
 	});
 
 	$('#tableResults').on('click','.resultRows', function (e) {	
-		prev = $(this).attr("id");				
+		prev = $(this).attr("id");	
+		$('#msg').text("");			
 		ws.send(
 			JSON.stringify({
 				event: 'get-searchBy',
@@ -51,6 +54,7 @@ $(document).ready(function () {
 
 	$('#modifyBtn').on('click', function (e) {
 		e.preventDefault();
+		$('#msg').text("");
 		const data = {
 			rma: $('#rmaInput').val().trim(),
 			sn1: $('#sn1Input').val().trim(),
@@ -58,8 +62,7 @@ $(document).ready(function () {
 			frmDate: $('#dateInput').val().trim(),
 			comment: $('#msgTextarea').val().trim(),
 			prev
-		};
-		console.log(data);
+		};		
 		ws.send(
 			JSON.stringify({
 				event: 'update-one',
@@ -69,6 +72,7 @@ $(document).ready(function () {
 	});
 
 	$('#frm').on('reset', function (e) {
+		$('#msg').text("");
 		setTimeout(function () {
 			$('#dateInput').val(date);
 		});
@@ -76,7 +80,7 @@ $(document).ready(function () {
 
 	$('input[type=radio]').change(function () {
 		const opt = this.value;
-
+		$('#msg').text("");		
 		switch (opt) {
 			case 'modify':
 				setModify();
@@ -108,8 +112,7 @@ $(document).ready(function () {
 		$('#dateInput').val('');
 	}
 	function showResult(obj) {
-		let cnt = 0;
-		console.log(obj.eventData)
+		let cnt = 0;		
 		obj.eventData.forEach((element) => {
 			const e = JSON.parse(element);
 			cnt++;
@@ -142,6 +145,9 @@ $(document).ready(function () {
 			$('#dateInput').val(e.date),
 			$('#msgTextarea').val(e.comment)
 		} 
+		if (obj.event === 'show-error') {
+			$('#msg').text(obj.err);
+		}
 	};
 	
 });

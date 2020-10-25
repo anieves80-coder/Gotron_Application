@@ -45,10 +45,7 @@ func main() {
 	// Needs to set after starting the window/browser
 	//window.OpenDevTools()
 
-	// window.On(&gotron.Event{Event: "get-all"}, func(bin []byte) {
-	// 	d := x.search("Select * from rmaData")		
-	// 	sendBack(window, d, "show-results")
-	// })
+	// Adds a new record to the db
 	window.On(&gotron.Event{Event: "add-one"}, func(bin []byte) {
 		var ge GetEvent
 		var d DataInfo
@@ -59,37 +56,44 @@ func main() {
 		d.Sn2 = ge.Data["sn2"]
 		i, err := strconv.Atoi(ge.Data["rma"])
 		if err != nil {
-			fmt.Println("send a msg to frontend about rma being only numbers")
+			sendErrMsg(window, "Only numbers allowed in the RMA field.")
+		} else {
+			d.Rma = i
+			d.addRec()
 		}
-		d.Rma = i
-		d.addUser()
 	})
 
-	window.On(&gotron.Event{Event: "get-searchBy"}, func(bin []byte) {			
+	// Composes a search query and fetches the data from the db
+	window.On(&gotron.Event{Event: "get-searchBy"}, func(bin []byte) {
 		var ge GetEvent
 		var d DataInfo
-		q := []string{"IS NOT NULL","IS NOT NULL","IS NOT NULL"}
+		q := []string{"IS NOT NULL", "IS NOT NULL", "IS NOT NULL"}
 		json.Unmarshal(bin, &ge)
+		fmt.Println(ge.Data)
 		if ge.Data["rma"] != "" {
-			q[0] = fmt.Sprintf(`= %s`,ge.Data["rma"])
+			q[0] = fmt.Sprintf(`= %s`, ge.Data["rma"])
 		}
 		if ge.Data["sn1"] != "" {
-			q[1] = fmt.Sprintf(`= "%s" OR SN2 = "%s"`,ge.Data["sn1"],ge.Data["sn1"])
+			q[1] = fmt.Sprintf(`= "%s" OR SN2 = "%s"`, ge.Data["sn1"], ge.Data["sn1"])
 		}
 		if ge.Data["frmDate"] != "" {
-			q[2] = fmt.Sprintf(`= "%s"`,ge.Data["frmDate"])
-		}		
-		query := fmt.Sprintf(`SELECT * FROM rmaData WHERE RMA %s AND SN1 %s AND DATE %s`, q[0],q[1],q[2] )						
-		res := d.search(query)	
-		if(ge.Data["update"] == "true"){
-			sendBack(window, res, "show-results")
-			sendBack(window, res, "show-inForm")
-		} else {
-			sendBack(window, res, "show-results")
+			q[2] = fmt.Sprintf(`= "%s"`, ge.Data["frmDate"])
 		}
-		
+		query := fmt.Sprintf(`SELECT * FROM rmaData WHERE RMA %s AND SN1 %s AND DATE %s`, q[0], q[1], q[2])
+		res, r := d.search(query)
+		if r != "" {
+			sendErrMsg(window, r)
+		} else {
+			if ge.Data["update"] == "true" {
+				sendBack(window, res, "show-results")
+				sendBack(window, res, "show-inForm")
+			} else {
+				sendBack(window, res, "show-results")
+			}
+		}
 	})
 
+	// Updates a single record from the db
 	window.On(&gotron.Event{Event: "update-one"}, func(bin []byte) {
 		var ge GetEvent
 		var d DataInfo
@@ -100,21 +104,34 @@ func main() {
 		d.Sn2 = ge.Data["sn2"]
 		i, err := strconv.Atoi(ge.Data["rma"])
 		if err != nil {
-			fmt.Println("send a msg to frontend about rma being only numbers")
+			sendErrMsg(window, "Only numbers allowed in the RMA field.")
+		} else {
+			d.Rma = i
+			n, _ := strconv.Atoi(ge.Data["prev"])
+			d.update(n)
 		}
-		d.Rma = i
-		n, _ := strconv.Atoi(ge.Data["prev"])
-		fmt.Println(n)
-		d.update(n)
 	})
 
 	// Wait for the application to close
 	<-done
 }
 
-func sendBack(window *gotron.BrowserWindow, d []string, e string){
+// Sends the results from the db query back to the front end.
+func sendBack(window *gotron.BrowserWindow, d []string, e string) {
 	window.Send(&CustomEvent{
 		Event:           &gotron.Event{Event: e},
 		CustomAttribute: d,
+	})
+}
+
+// Sends a custom error message back to the front end.
+func sendErrMsg(window *gotron.BrowserWindow, m string) {
+	type ErrorEvent struct {
+		*gotron.Event
+		CustomAttribute string `json:"err"`
+	}
+	window.Send(&ErrorEvent{
+		Event:           &gotron.Event{Event: "show-error"},
+		CustomAttribute: m,
 	})
 }
