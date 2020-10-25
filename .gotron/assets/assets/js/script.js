@@ -1,10 +1,10 @@
-$(document).ready(function() {
+$(document).ready(function () {
 	let ws = new WebSocket('ws://localhost:' + global.backendPort + '/web/app/events');
 	const dt = new Date();
 	const date = dt.getMonth() + 1 + '/' + dt.getDate() + '/' + dt.getFullYear();
 	$('#dateInput').val(date);
 
-	$('#frm').on('submit', function(e) {
+	$('#frm').on('submit', function (e) {
 		e.preventDefault();
 		const data = {
 			rma: $('#rmaInput').val(),
@@ -21,14 +21,14 @@ $(document).ready(function() {
 		);
 	});
 
-	$('#searchBtn').on('click', function(e) {
+	$('#searchBtn').on('click', function (e) {
 		e.preventDefault();
 		const data = {
-			rma: $('#rmaInput').val(),
-			sn1: $('#sn1Input').val(),
-			frmDate: $('#dateInput').val()
+			rma: $('#rmaInput').val().trim(),
+			sn1: $('#sn1Input').val().trim(),
+			frmDate: $('#dateInput').val().trim()
 		};
-		if (!data.rma && !data.sn1 && !data.Date) {
+		if (!data.rma && !data.sn1 && !data.frmDate) {
 			ws.send(
 				JSON.stringify({
 					event: 'get-all'
@@ -37,25 +37,25 @@ $(document).ready(function() {
 		} else {
 			ws.send(
 				JSON.stringify({
-					event: 'get-search',
+					event: 'get-searchBy',
 					data
 				})
 			);
 		}
 	});
 
-	$('#modifyBtn').on('click', function(e) {
+	$('#modifyBtn').on('click', function (e) {
 		e.preventDefault();
 		alert('ok there');
 	});
 
-	$('#frm').on('reset', function(e) {
-		setTimeout(function() {
+	$('#frm').on('reset', function (e) {
+		setTimeout(function () {
 			$('#dateInput').val(date);
 		});
 	});
 
-	$('input[type=radio]').change(function() {
+	$('input[type=radio]').change(function () {
 		const opt = this.value;
 
 		switch (opt) {
@@ -88,25 +88,31 @@ $(document).ready(function() {
 		$('#sn2Input').removeAttr('disabled');
 		$('#dateInput').val('');
 	}
+	function showResult(obj) {
+		let cnt = 0;
+		console.log(obj.eventData)
+		obj.eventData.forEach((element) => {
+			const e = JSON.parse(element);
+			cnt++;
+			$('#tableResults').append(`
+				<tr>
+					<th scope="row">${cnt}</th>
+					<td>${e.rma}</td>
+					<td>${e.sn1}</td>
+					<td>${e.sn2}</td>
+					<td>${e.date}</td>
+					<td>${e.comment}</td>
+				</tr>                
+			`);
+		});
+	}
 
 	ws.onmessage = (message) => {
 		const obj = JSON.parse(message.data);
-		let cnt = 0;
 		$('#tableResults').empty();
-		if (obj.event === 'get-all') {
-			obj.eventData.forEach((element) => {
-				const e = JSON.parse(element);
-				cnt++;
-				$('#tableResults').append(`
-                    <tr>
-                        <th scope="row">${cnt}</th>
-                        <td>${e.rma}</td>
-                        <td>${e.sn1}</td>
-                        <td>${e.sn2}</td>
-                        <td>${e.comment}</td>
-                    </tr>                
-                `);
-			});
-		}
+		if (obj.event === 'show-results') {
+			showResult(obj);
+		} 
 	};
+	
 });

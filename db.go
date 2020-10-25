@@ -70,16 +70,14 @@ func (d DataInfo) search(q string) []string {
 func returnResults(d DataInfo, rows *sql.Rows) []string {
 
 	var results []string
-	for rows.Next() {
-		fmt.Println("In here")
+	for rows.Next() {		
 		err := rows.Scan(&d.Rma, &d.Sn1, &d.Sn2, &d.Date, &d.Comment)
 		if err != nil {
 			d.Err = "Error reading data from query."
 			res, _ := json.Marshal(d)
 			results = append(results, string(res))
 			return results
-		}
-		fmt.Println(d)
+		}		
 		res, _ := json.Marshal(d)
 		results = append(results, string(res))
 	}

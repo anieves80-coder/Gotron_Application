@@ -46,11 +46,8 @@ func main() {
 	//window.OpenDevTools()
 
 	window.On(&gotron.Event{Event: "get-all"}, func(bin []byte) {
-		d := x.search("Select * from rmaData")
-		window.Send(&CustomEvent{
-			Event:           &gotron.Event{Event: "get-all"},
-			CustomAttribute: d,
-		})
+		d := x.search("Select * from rmaData")		
+		sendBack(window, d, "show-results")
 	})
 	window.On(&gotron.Event{Event: "add-one"}, func(bin []byte) {
 		var ge GetEvent
@@ -67,22 +64,33 @@ func main() {
 		d.Rma = i
 		d.addUser()
 	})
-	window.On(&gotron.Event{Event: "get-searchByRMA"}, func(bin []byte) {
+
+	window.On(&gotron.Event{Event: "get-searchBy"}, func(bin []byte) {		
 		var ge GetEvent
 		var d DataInfo
+		q := []string{"IS NOT NULL","IS NOT NULL","IS NOT NULL"}
 		json.Unmarshal(bin, &ge)	
-		i, err := strconv.Atoi(ge.Data["rma"])
-		if err != nil {
-			fmt.Println("send a msg to frontend about rma being only numbers")
-		}	
-		query := fmt.Sprintf(`SELECT * FROM rmaData WHERE RMA = %d`, i)
-		// query := fmt.Sprintf(`SELECT * FROM rmaData WHERE RMA = %d AND SN1 = "%s" AND DATE = "%s"`, d.Rma, d.Sn1, d.Date)
-		res := d.search(query)
-		fmt.Println(res)
+		if ge.Data["rma"] != "" {
+			q[0] = fmt.Sprintf(`= %s`,ge.Data["rma"])
+		}
+		if ge.Data["sn1"] != "" {
+			q[1] = fmt.Sprintf(`= "%s" OR SN2 = "%s"`,ge.Data["sn1"],ge.Data["sn1"])
+		}
+		if ge.Data["frmDate"] != "" {
+			q[2] = fmt.Sprintf(`= "%s"`,ge.Data["frmDate"])
+		}		
+		query := fmt.Sprintf(`SELECT * FROM rmaData WHERE RMA %s AND SN1 %s AND DATE %s`, q[0],q[1],q[2] )				
+		res := d.search(query)		
+		sendBack(window, res, "show-results")
 	})
-	window.On(&gotron.Event{Event: "get-searchBySN"}, func(bin []byte) {})
-	window.On(&gotron.Event{Event: "get-searchByDATE"}, func(bin []byte) {})
 
 	// Wait for the application to close
 	<-done
+}
+
+func sendBack(window *gotron.BrowserWindow, d []string, e string){
+	window.Send(&CustomEvent{
+		Event:           &gotron.Event{Event: e},
+		CustomAttribute: d,
+	})
 }
