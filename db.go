@@ -38,6 +38,14 @@ func (d DataInfo) addUser() {
 	tx.Commit()
 }
 
+func (d DataInfo) update(p int) {		
+	tx, _ := db.Begin()
+	stmt, _ := tx.Prepare("UPDATE rmaData SET RMA=?, SN1=?, SN2=?, DATE=?, COMMENTS=? WHERE RMA=?")
+	_, err := stmt.Exec(d.Rma, d.Sn1, d.Sn2, d.Date, d.Comment, p)
+	fmt.Println(err)
+	tx.Commit()
+}
+
 func (d DataInfo) search(q string) []string {
 	var results []string
 	rows, err := db.Query(q)
@@ -50,22 +58,6 @@ func (d DataInfo) search(q string) []string {
 	defer rows.Close()
 	return returnResults(d, rows)
 }
-
-// func (d DataInfo) search() []string {
-// 	var results []string
-// 	//query := fmt.Sprintf("SELECT * FROM rmaData WHERE RMA = %d AND SN1 = %s AND SN2 = %s AND DATE = %s", d.Rma, d.Sn1, d.Sn2, d.Date)
-// 	query := fmt.Sprintf(`SELECT * FROM rmaData WHERE RMA = %d AND SN1 = "%s" AND DATE = "%s"`, d.Rma, d.Sn1, d.Date)
-// 	fmt.Println(query)
-// 	rows, err := db.Query(query)
-// 	if err != nil {
-// 		d.Err = "Error running query."
-// 		res, _ := json.Marshal(d)
-// 		results = append(results, string(res))
-// 		return results
-// 	}
-// 	defer rows.Close()
-// 	return returnResults(d, rows)
-// }
 
 func returnResults(d DataInfo, rows *sql.Rows) []string {
 

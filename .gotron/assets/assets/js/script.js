@@ -2,7 +2,8 @@ $(document).ready(function () {
 	let ws = new WebSocket('ws://localhost:' + global.backendPort + '/web/app/events');
 	const dt = new Date();
 	const date = dt.getMonth() + 1 + '/' + dt.getDate() + '/' + dt.getFullYear();
-	$('#dateInput').val(date);
+	let prev;
+	$('#dateInput').val(date);	
 
 	$('#frm').on('submit', function (e) {
 		e.preventDefault();
@@ -26,27 +27,45 @@ $(document).ready(function () {
 		const data = {
 			rma: $('#rmaInput').val().trim(),
 			sn1: $('#sn1Input').val().trim(),
-			frmDate: $('#dateInput').val().trim()
+			frmDate: $('#dateInput').val().trim(),
+			// update: false
 		};
-		if (!data.rma && !data.sn1 && !data.frmDate) {
-			ws.send(
-				JSON.stringify({
-					event: 'get-all'
-				})
-			);
-		} else {
-			ws.send(
-				JSON.stringify({
-					event: 'get-searchBy',
-					data
-				})
-			);
-		}
+		
+		ws.send(
+			JSON.stringify({
+				event: 'get-searchBy'
+			})
+		);
+		 
+	});
+
+	$('#tableResults').on('click','.resultRows', function (e) {	
+		prev = $(this).attr("id");				
+		ws.send(
+			JSON.stringify({
+				event: 'get-searchBy',
+				data: { rma: $(this).attr("id"), update: "true" }
+			})
+		);
 	});
 
 	$('#modifyBtn').on('click', function (e) {
 		e.preventDefault();
-		alert('ok there');
+		const data = {
+			rma: $('#rmaInput').val().trim(),
+			sn1: $('#sn1Input').val().trim(),
+			sn2: $('#sn2Input').val().trim(),
+			frmDate: $('#dateInput').val().trim(),
+			comment: $('#msgTextarea').val().trim(),
+			prev
+		};
+		console.log(data);
+		ws.send(
+			JSON.stringify({
+				event: 'update-one',
+				data
+			})
+		);
 	});
 
 	$('#frm').on('reset', function (e) {
@@ -95,7 +114,7 @@ $(document).ready(function () {
 			const e = JSON.parse(element);
 			cnt++;
 			$('#tableResults').append(`
-				<tr>
+				<tr class="resultRows" id="${e.rma}">
 					<th scope="row">${cnt}</th>
 					<td>${e.rma}</td>
 					<td>${e.sn1}</td>
@@ -108,10 +127,20 @@ $(document).ready(function () {
 	}
 
 	ws.onmessage = (message) => {
-		const obj = JSON.parse(message.data);
-		$('#tableResults').empty();
+		const obj = JSON.parse(message.data);		
 		if (obj.event === 'show-results') {
+			$('#tableResults').empty();
 			showResult(obj);
+		} 
+		if (obj.event === 'show-inForm') {
+			const e = JSON.parse(obj.eventData);			
+			$("#option3").prop("checked", true);
+			setModify();
+			$('#rmaInput').val(e.rma),
+			$('#sn1Input').val(e.sn1),
+			$('#sn2Input').val(e.sn2),
+			$('#dateInput').val(e.date),
+			$('#msgTextarea').val(e.comment)
 		} 
 	};
 	
