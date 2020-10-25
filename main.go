@@ -56,10 +56,11 @@ func main() {
 		d.Sn2 = ge.Data["sn2"]
 		i, err := strconv.Atoi(ge.Data["rma"])
 		if err != nil {
-			sendErrMsg(window, "Only numbers allowed in the RMA field.")
+			sendMsg(window, "Only numbers allowed in the RMA field.")
 		} else {
 			d.Rma = i
 			d.addRec()
+			sendMsg(window, "Data added.")
 		}
 	})
 
@@ -82,7 +83,7 @@ func main() {
 		query := fmt.Sprintf(`SELECT * FROM rmaData WHERE RMA %s AND SN1 %s AND DATE %s`, q[0], q[1], q[2])
 		res, r := d.search(query)
 		if r != "" {
-			sendErrMsg(window, r)
+			sendMsg(window, r)
 		} else {
 			if ge.Data["update"] == "true" {
 				sendBack(window, res, "show-results")
@@ -104,11 +105,12 @@ func main() {
 		d.Sn2 = ge.Data["sn2"]
 		i, err := strconv.Atoi(ge.Data["rma"])
 		if err != nil {
-			sendErrMsg(window, "Only numbers allowed in the RMA field.")
+			sendMsg(window, "Only numbers allowed in the RMA field.")
 		} else {
 			d.Rma = i
 			n, _ := strconv.Atoi(ge.Data["prev"])
 			d.update(n)
+			sendMsg(window, "Data updated.")
 		}
 	})
 
@@ -124,14 +126,14 @@ func sendBack(window *gotron.BrowserWindow, d []string, e string) {
 	})
 }
 
-// Sends a custom error message back to the front end.
-func sendErrMsg(window *gotron.BrowserWindow, m string) {
+// Sends a custom message back to the front end.
+func sendMsg(window *gotron.BrowserWindow, m string) {
 	type ErrorEvent struct {
 		*gotron.Event
-		CustomAttribute string `json:"err"`
+		CustomAttribute string `json:"msg"`
 	}
 	window.Send(&ErrorEvent{
-		Event:           &gotron.Event{Event: "show-error"},
+		Event:           &gotron.Event{Event: "show-msg"},
 		CustomAttribute: m,
 	})
 }

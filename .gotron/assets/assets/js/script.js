@@ -92,6 +92,12 @@ $(document).ready(function () {
 				setAdd();
 		}
 	});
+	function clearTxtBox(){
+		$('#rmaInput').val(""),
+		$('#sn1Input').val(""),
+		$('#sn2Input').val(""),		
+		$('#msgTextarea').val("")
+	}
 
 	function setSearch() {
 		$('#addBtn, #modifyBtn').addClass('btnHide');
@@ -145,8 +151,9 @@ $(document).ready(function () {
 			$('#dateInput').val(e.date),
 			$('#msgTextarea').val(e.comment)
 		} 
-		if (obj.event === 'show-error') {
-			$('#msg').text(obj.err);
+		if (obj.event === 'show-msg') {
+			clearTxtBox();
+			$('#msg').text(obj.msg);
 		}
 	};
 	
